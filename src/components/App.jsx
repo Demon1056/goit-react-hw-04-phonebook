@@ -1,74 +1,54 @@
-import React, { Component } from 'react';
+import React, { useState, useEffect } from 'react';
 import shortid from 'shortid';
 import { ContactForm } from './Form/Form';
 import { ContactList } from './ContactsList/ContactsList';
 import { Filter } from './Filter/Filter';
 import { PhoneBook, InformationArea } from './App.styled';
-export class App extends Component {
-  state = {
-    contacts: [],
-    filter: '',
-  };
+export const App = () => {
+  const [contacts, setContacts] = useState([]);
+  const [filter, setFilter] = useState('');
+  useEffect(() => {
+    const contactsFromStorage = localStorage.getItem('contacts');
+    const parceContacts = JSON.parse(contactsFromStorage);
+    if (parceContacts.length > 0) {
+      setContacts(parceContacts);
+    }
+  }, []);
+  useEffect(() => {
+    localStorage.setItem('contacts', JSON.stringify(contacts));
+  }, [contacts]);
 
-  generId = () => shortid.generate();
-  updateContacts = (values, actions) => {
-    actions.resetForm();
-    this.setState(({ contacts }) => {
-      if (contacts.find(({ name }) => name === values.name)) {
-        return alert(`${values.name} is already in contacts`);
-      }
-
-      return {
-        contacts: [...contacts, { id: this.generId(), ...values }],
-      };
-    });
-  };
-  updateFilter = e =>
-    this.setState({
-      filter: e.currentTarget.value,
-    });
-  filterContacts = () => {
-    const { contacts, filter } = this.state;
+  const filterContacts = () => {
     return contacts.filter(({ name }) =>
       name.toUpperCase().includes(filter.toUpperCase())
     );
   };
-  deleteContacts = item => {
-    const newContacts = this.state.contacts.filter(
-      contact => contact.id !== item.id
-    );
-    this.setState({
-      contacts: newContacts,
-    });
+  const deleteContacts = item => {
+    const newContacts = contacts.filter(contact => contact.id !== item.id);
+    setContacts(newContacts);
   };
-  componentDidMount() {
-    const contacts = localStorage.getItem('contacts');
-    const parceConatacts = JSON.parse(contacts);
-    if (parceConatacts) {
-      this.setState({ contacts: parceConatacts });
+  const updateFilter = e => setFilter(e.currentTarget.value);
+  const generId = () => shortid.generate();
+
+  const updateContacts = (values, actions) => {
+    actions.resetForm();
+    if (contacts.find(({ name }) => name === values.name)) {
+      return alert(`${values.name} is already in contacts`);
     }
-  }
-  componentDidUpdate(preProps, PrevState) {
-    if (this.state.contacts !== PrevState.contacts) {
-      localStorage.setItem('contacts', JSON.stringify(this.state.contacts));
-    }
-  }
-  render() {
-    const contactsLength = this.state.contacts.length;
-    return (
-      <PhoneBook>
-        <ContactForm showName={this.updateContacts} />
-        <InformationArea>
-          <h2>CONTACTS</h2>
-          <Filter updateFilter={this.updateFilter} />
-          {contactsLength > 0 && (
-            <ContactList
-              data={this.filterContacts()}
-              deleteContact={this.deleteContacts}
-            />
-          )}
-        </InformationArea>
-      </PhoneBook>
-    );
-  }
-}
+    return setContacts([...contacts, { id: generId(), ...values }]);
+  };
+
+  const contactsLength = contacts.length;
+  return (
+    <PhoneBook>
+      <ContactForm showName={updateContacts} />
+      <InformationArea>
+        <h2>CONTACTS</h2>
+        <Filter updateFilter={updateFilter} />
+        {contactsLength > 0 && (
+          <ContactList data={filterContacts()} deleteContact={deleteContacts} />
+        )}
+      </InformationArea>
+    </PhoneBook>
+  );
+};
