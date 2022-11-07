@@ -10,12 +10,14 @@ export const App = () => {
   useEffect(() => {
     const contactsFromStorage = localStorage.getItem('contacts');
     const parceContacts = JSON.parse(contactsFromStorage);
-    if (parceContacts.length > 0) {
+    if (parceContacts) {
       setContacts(parceContacts);
     }
   }, []);
   useEffect(() => {
-    localStorage.setItem('contacts', JSON.stringify(contacts));
+    if (contacts.length > 0) {
+      localStorage.setItem('contacts', JSON.stringify(contacts));
+    }
   }, [contacts]);
 
   const filterContacts = () => {
